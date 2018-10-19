@@ -46,7 +46,7 @@ $(() => {
 ```
 
 ## Directions for Transfering
-1. Install `node.js` version 8 and up (I like to use [nvm](https://github.com/creationix/nvm#installation))
+1. Install `node.js` version 8 and up (I like to use [Node Version Manager](https://github.com/creationix/nvm#installation))
 2. Clone this repository on your local machine and `cd` to that directory
 3. `$ npm install`
 4. `$ node export-biblio.js <website_url>/biblio` (This downloads a bibtex file and PDFs. [See documentation](#export-biblio-documentation))
