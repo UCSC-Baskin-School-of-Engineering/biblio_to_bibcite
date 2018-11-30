@@ -1,0 +1,23 @@
+uuid: 78971027-edf8-4c8e-ab85-1cf7699ae492
+langcode: en
+status: true
+dependencies:
+  module:
+    - bibcite_entity
+    - file
+id: bibcite_reference.field_pdf
+field_name: field_pdf
+entity_type: bibcite_reference
+type: file
+settings:
+  display_field: false
+  display_default: false
+  uri_scheme: public
+  target_type: file
+module: file
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

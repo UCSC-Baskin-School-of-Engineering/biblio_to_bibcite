@@ -1,0 +1,27 @@
+uuid: 0c4ae864-ec61-444f-a95d-529c76f4837c
+langcode: en
+status: true
+dependencies:
+  config:
+    - bibcite_entity.bibcite_reference_type.conference_paper
+    - field.storage.bibcite_reference.field_pdf
+  module:
+    - file
+id: bibcite_reference.conference_paper.field_pdf
+field_name: field_pdf
+entity_type: bibcite_reference
+bundle: conference_paper
+label: 'PDF File'
+description: '<strong>IMPORTANT</strong>: After uploading a file, right click the icon, click <i>Copy Link Address</i>, then paste the link in the <i>URL</i> field (under the <i>Locators</i> tab).'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  file_directory: papers
+  file_extensions: pdf
+  max_filesize: ''
+  description_field: true
+  handler: 'default:file'
+  handler_settings: {  }
+field_type: file
