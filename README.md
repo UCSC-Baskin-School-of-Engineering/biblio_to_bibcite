@@ -21,23 +21,16 @@ This repository will walk you through how to migrate publications from the Drupa
     $ git clone https://github.com/wyattades/biblio_to_bibcite /tmp/bib_config
     $ drush cim --partial --source=/tmp/bib_config/config_import
     ```
-<!-- 5. visiting `<website_url>/admin/config/development/configuration/single/import`.
+    (You may need to run the latter command a second time if not all files import the first time)
 
-    Import them in the following order:
-    1. __Field Storage:__ field.storage.bibcite_reference.field_pdf.yml
-    2. __Field:__ field.field.bibcite_reference.conference_paper.field_pdf.yml
-    3. __View:__ views.view.publications.yml
-   
-    This will create a `view` at `<website_url>/publications` (aliased to `<website_url>/biblio`) containing all of the Biblio references you upload. -->
-
-1. Add the following CSS to your site:
+4. Add the following CSS to your site:
     ```css
     .bibcite-links ul.inline {
       display: flex;
     }
     ```
 
-2. Add the following JavaScript to your site:
+5. Add the following JavaScript to your site:
     ```js
     var $ = window.jQuery || window.$ || window.jquery;
     $(() => {
@@ -62,7 +55,7 @@ This repository will walk you through how to migrate publications from the Drupa
 2. Clone this repository on your local machine and `cd` to that directory
 3. `$ npm install`
 4. `$ node export-biblio.js <website_url>/biblio` (This downloads a bibtex file and PDFs. [See documentation](#export-biblio-documentation))
-5. Move downloaded PDFs to your website's files. Their public url must be: `<website_url>/files/papers/`
+5. Move downloaded PDFs to your website's files. Their public url must be: `<website_url>/sites/default/files/papers/`
 6. Go to `<website_url>/admin/config/bibcite/import`, and import the bibtex file created in step 4
 7. Done!
 

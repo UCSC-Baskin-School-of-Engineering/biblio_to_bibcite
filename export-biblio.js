@@ -85,7 +85,8 @@ const getBibAndPdfs = async (biblioUrl, outputFile = 'bibtex.bib', pages, papers
 
   for (let i = 0; i < bibs.length; i++) {
     if (pdfs[i]) {
-      bibs[i].entryTags.url = pdfs[i];
+      const filename = path.basename(url.parse(pdfs[i]).pathname);
+      bibs[i].entryTags.url = `/sites/default/files/papers/${filename}`;
     }
   }
 
