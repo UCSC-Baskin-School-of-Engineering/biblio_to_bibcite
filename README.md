@@ -1,52 +1,64 @@
 # Biblio/Publications Transfer from Drupal 7 to Drupal 8
 
+This repository will walk you through how to migrate publications from the Drupal 7 `biblio` module to the Drupal 8 `bibcite` module.
+
 ## Drupal Setup
-On the Drupal 8 machine, run:
-```bash
-$ composer require 'drupal/bibcite:^1.0'
-```
-That command should install the following modules:
-- drupal/ds: ^3.1
-- drupal/bibcite: ^1.0
-- audiolabs/bibtexparser: dev-master
+1. On the Drupal 8 machine, run:
+    ```bash
+    $ composer require 'drupal/bibcite:^1.0' 'drupal/ds:^3.1'
+    ```
 
-(and these ones, but I'm not sure:)
-- academicpuma/citeproc-php: ~1.0
-- adci/full-name-parser: ^0.2
-- technosophos/LibRIS: ~2.0
-- caseyamcl/php-marc21: ~1.0
+2. Enable and install the following modules on your Drupal 8 site by visiting `<website_url>/admin/modules`:
+    - Bibliography & Citation
+    - Bibliography & Citation - Entity
+    - Bibliography & Citation - Export
+    - Bibliography & Citation - import
+    - Bibliography & Citation - BibTeX
+    - Display Suite
   
-Copy the `Bibcite` and `view.publications` Drupal configuration from `https://linqs.soe.ucsc.edu` to your site. This will create a `view` at `/publications` (aliased to `/biblio`) containing all of the Biblio references you upload.
+3. Import all of the Drupal configuration files from the [config_import](/config_import) directory to your site by running the following commands on the Drupal machine:
+    ```bash
+    $ git clone https://github.com/wyattades/biblio_to_bibcite /tmp/bib_config
+    $ drush cim --partial --source=/tmp/bib_config/config_import
+    ```
+<!-- 5. visiting `<website_url>/admin/config/development/configuration/single/import`.
 
-Add the following CSS to your site:
-```css
-.bibcite-links ul.inline {
-  display: flex;
-}
-```
+    Import them in the following order:
+    1. __Field Storage:__ field.storage.bibcite_reference.field_pdf.yml
+    2. __Field:__ field.field.bibcite_reference.conference_paper.field_pdf.yml
+    3. __View:__ views.view.publications.yml
+   
+    This will create a `view` at `<website_url>/publications` (aliased to `<website_url>/biblio`) containing all of the Biblio references you upload. -->
 
-Add the following JavaScript to your site:
-```js
-var $ = window.jQuery || window.$ || window.jquery;
-$(() => {
-  if ($('.view-publications').length) {
-  // Add links for filtering on /publications page
-    $('td.views-field-keywords-target-id > a').each((i, el) => {
-      el.setAttribute('href', '/publications?name=' + encodeURIComponent(el.textContent));
+1. Add the following CSS to your site:
+    ```css
+    .bibcite-links ul.inline {
+      display: flex;
+    }
+    ```
+
+2. Add the following JavaScript to your site:
+    ```js
+    var $ = window.jQuery || window.$ || window.jquery;
+    $(() => {
+      if ($('.view-publications').length) {
+      // Add links for filtering on /publications page
+        $('td.views-field-keywords-target-id > a').each((i, el) => {
+          el.setAttribute('href', '/publications?name=' + encodeURIComponent(el.textContent));
+        });
+        $('td.views-field-author-target-id > a').each((i, el) => {
+          var names = el.textContent.split(/\s+/);
+          var first = names[0] || '';
+          var last = names[1] || '';
+
+          el.setAttribute('href', '/publications?first_name=' + encodeURIComponent(first) + '&last_name=' + encodeURIComponent(last));
+        });
+      }
     });
-    $('td.views-field-author-target-id > a').each((i, el) => {
-      var names = el.textContent.split(/\s+/);
-      var first = names[0] || '';
-      var last = names[1] || '';
-
-      el.setAttribute('href', '/publications?first_name=' + encodeURIComponent(first) + '&last_name=' + encodeURIComponent(last));
-    });
-  }
-});
-```
+    ```
 
 ## Directions for Transfering
-1. Install `node.js` version 8 and up (I like to use [Node Version Manager](https://github.com/creationix/nvm#installation))
+1. Install `node.js` version 8 and up
 2. Clone this repository on your local machine and `cd` to that directory
 3. `$ npm install`
 4. `$ node export-biblio.js <website_url>/biblio` (This downloads a bibtex file and PDFs. [See documentation](#export-biblio-documentation))
@@ -67,5 +79,5 @@ Options:
   -p, --papers <dir>   Directory to download PDF papers. Defaults to `papers/`
   -h, --help           output usage information
 
-Example: node export-biblio.js https://linqs.soe.ucsc.edu/biblio
+Example: node export-biblio.js https://example-drupal7-site.com/biblio
 ```
