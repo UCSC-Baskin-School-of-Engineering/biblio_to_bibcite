@@ -56,7 +56,7 @@ This repository will walk you through how to migrate publications from the Drupa
 3. `$ npm install`
 4. `$ node export-biblio.js <website_url>/biblio` (This downloads a bibtex file and PDFs. [See documentation](#export-biblio-documentation))
 5. Move downloaded PDFs to your website's files. Their public url must be: `<website_url>/sites/default/files/papers/`
-6. Go to `<website_url>/admin/config/bibcite/import`, and import the bibtex file created in step 4
+6. Go to `<website_url>/admin/config/bibcite/import`, and import the bibtex file created in step 4. If the page shows an error, then there is something wrong with the bibtex file. One common problem is not comma seperating peoples' names correctly. For example: 'Smith,Jr.' should be 'Smith Jr.'
 7. Done!
 
 ## `export-biblio` Documentation
