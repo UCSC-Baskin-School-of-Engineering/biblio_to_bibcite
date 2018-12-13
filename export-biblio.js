@@ -1,24 +1,24 @@
-const bibtex = require('bibtex-parse-js');
 const cheerio = require('cheerio');
 const program = require('commander');
 const https = require('https');
 const fs = require('fs-extra');
 const url = require('url');
 const path = require('path');
+const bibtexParse = require('bibtex-parse-js');
 
 
 const download = (url, downloadPath) => new Promise((resolve, reject) => {
   https.get(url, (res) => {
     if (downloadPath) {
       const stream = fs.createWriteStream(downloadPath);
-      stream.on('close', resolve);
+      stream.once('close', resolve);
       res.pipe(stream);
     } else {
       let data = '';
       res.on('data', (chunk) => {
         data += chunk;
       });
-      res.on('end', () => resolve(data));
+      res.once('end', () => resolve(data));
     }
   })
   .on('error', reject);
@@ -27,25 +27,39 @@ const download = (url, downloadPath) => new Promise((resolve, reject) => {
 // Modified version of bibtex-parse-js
 const toBibtex = (json) => {
   let out = '';
-  for (let i in json) {
-      out += "@" + json[i].entryType;
+  for (const row of json) {
+      out += "@" + row.entryType;
       out += '{';
-      if (json[i].citationKey)
-          out += json[i].citationKey + ',\n';
-      if (json[i].entry)
-          out += json[i].entry ;
-      if (json[i].entryTags) {
+      if (row.citationKey)
+          out += row.citationKey + ',\n';
+      if (row.entry)
+          out += row.entry ;
+      if (row.entryTags) {
           let tags = '';
-          for (let jdx in json[i].entryTags) {
+          for (let jdx in row.entryTags) {
               if (tags.length != 0)
                   tags += ',\n';
-              tags += jdx + ' = {' + json[i].entryTags[jdx] + '}';
+              tags += '  ' + jdx + ' = {' + row.entryTags[jdx] + '}';
           }
           out += tags + '\n';
       }
       out += '}\n';
   }
   return out;
+};
+
+const waitForKeypress = () => {
+  process.stdin.setRawMode(true);
+  return new Promise(resolve => {
+    process.stdin.once('data', (data) => {
+      const byteArray = [...data]
+      if (byteArray.length > 0 && byteArray[0] === 3) {
+        process.exit(1)
+      }
+      process.stdin.setRawMode(false);
+      resolve();
+    });
+  });
 };
 
 const getBibAndPdfs = async (biblioUrl, outputFile = 'bibtex.bib', pages, papersDir = 'papers/') => {
@@ -59,34 +73,61 @@ const getBibAndPdfs = async (biblioUrl, outputFile = 'bibtex.bib', pages, papers
     console.log('Failed to find bibtex export, using fallback:', bibDownload);
   }
 
-  const bibString = await download(url.resolve(biblioUrl, bibDownload));
-  const bibs = bibtex.toJSON(bibString);
+  let bibString = await download(url.resolve(biblioUrl, bibDownload));
+  let bibs;
+  while (!bibs) {
+    try {
+      bibs = bibtexParse.toJSON(bibString);
+    } catch (e) {
+      await fs.outputFile('FIXME.bib', bibString);
+      console.error((typeof e === 'object' ? e.message : e).substring(0, 300));
+      console.error('Fix the error in the file "FIXME.bib", then press any key to continue');
+      await waitForKeypress();
+      bibString = await fs.readFile('FIXME.bib', 'utf8');
+      await fs.remove('FIXME.bib');
+    }
+  }
 
   console.log('Parsing biblio pages...');
 
   const pdfs = [];  
-  for (let i = 0; pages ? i < pages.length : pdfs.length < bibs.length; i++) {
+  let first = null;
+  for (let page = 0; page < (pages ? pages : 100); page++) {
 
-    if (i > 0) {
-      html = await download(`${biblioUrl}?page=${i}`);
+    if (page > 0) {
+      html = await download(`${biblioUrl}?page=${page}`);
       $ = cheerio.load(html);
     }
 
-    let amount = 0;
-    $('.biblio-entry').each((i, el) => {
-      const $link = $(el).find('.biblio_file_links a');
+    const els = $('.biblio-entry').toArray();
+
+    if (els.length > 0) {
+      const href = $(els[0]).children('a').attr('href');
+      if (first === href) break;
+      else first = href;
+    } else break;
+
+    console.log('Found ' + els.length + ' entries on page ' + page);
+
+    for (let i = 0; i < els.length; i++) {
+      const $link = $(els[i]).find('.biblio_file_links a');
       pdfs.push($link.length > 0 ? $link.attr('href') : null);
-      amount++;
-    });
-    if (amount === 0) break;
+    }
   }
 
-  if (pdfs.length !== bibs.length) throw 'Exported Bibtex count does not match Bib element count';
+  if (pdfs.length !== bibs.length)
+    throw `Exported Bibtex count (${bibs.length}) does not match publication element count (${pdfs.length})`;
 
   for (let i = 0; i < bibs.length; i++) {
+    const tags = bibs[i].entryTags;
+    if (tags.attachments) delete tags.attachments;
+    if (tags.url) {
+      tags.original_publication = tags.url;
+      delete tags.url;
+    }
     if (pdfs[i]) {
       const filename = path.basename(url.parse(pdfs[i]).pathname);
-      bibs[i].entryTags.url = `/sites/default/files/papers/${filename}`;
+      tags.url = `/sites/default/files/papers/${filename}`;
     }
   }
 
@@ -131,6 +172,7 @@ if (!biblioUrl) {
 }
 
 getBibAndPdfs(biblioUrl, program.output, program.pages, program.papers)
+.then(() => process.exit(0))
 .catch((err) => {
   console.error(err);
   process.exit(1);
